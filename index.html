@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Italy Trip 2026</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --japan-green: #6B8E23;
+            --japan-red: #D9534F;
+            --japan-white: #F9F9F7;
+        }
+        body { 
+            font-family: 'Noto Sans JP', 'Noto Sans TC', sans-serif; 
+            background-color: var(--japan-white);
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* 頁首滿版圖 */
+        .banner-container {
+            height: 250px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+        .banner-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center 30%;
+        }
+        /* 圓弧銜接效果 */
+        .main-content {
+            margin-top: -40px;
+            border-radius: 40px 40px 0 0;
+            background-color: var(--japan-white);
+            position: relative;
+            z-index: 10;
+            min-height: calc(100vh - 210px);
+        }
+        /* 日系極簡 Tab */
+        .tab-btn {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+        }
+        .tab-active {
+            background-color: var(--japan-green) !important;
+            color: white !important;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(107, 142, 35, 0.3);
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* 行程卡片 */
+        .itinerary-card {
+            border-bottom: 1px solid #e5e7eb;
+            transition: transform 0.2s;
+        }
+        .itinerary-card:active { transform: scale(0.98); }
+    </style>
+</head>
+<body>
+    <div id="app" v-cloak class="max-w-md mx-auto min-h-screen relative shadow-2xl">
+        
+        <!-- Header Banner Area -->
+        <header class="relative">
+            <div class="banner-container">
+                <!-- 直接使用您提供的圖片連結 -->
+                <img src="https://translate.google.com/website?sl=auto&tl=zh-TW&hl=zh-TW&client=webapp&u=https://v7.fhy.tw/2025/01/20/17/10/7edca8d1033486be52109961.jpg" alt="Banner" class="banner-img">
+            </div>
+            
+            <!-- Floating Navigation Tabs (右下角浮動) -->
+            <div class="absolute bottom-12 right-4 flex space-x-2 z-20">
+                <button v-for="tab in tabs" :key="tab.id" @click="currentTab = tab.id" 
+                    :class="['tab-btn w-10 h-10 rounded-full flex items-center justify-center text-gray-600 shadow-md', currentTab === tab.id ? 'tab-active' : '']">
+                    <i :class="tab.icon"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content p-5">
+            
+            <!-- 1. 每日行程表 -->
+            <div v-if="currentTab === 'itinerary'">
+                <!-- Weather (自動顯示羅馬預設) -->
+                <div class="flex items-center justify-between bg-white/50 p-4 rounded-2xl mb-6 border border-gray-100 shadow-sm">
+                    <div class="flex items-center">
+                        <i class="fas fa-cloud-sun text-yellow-500 text-2xl mr-3"></i>
+                        <div>
+                            <div class="text-xs text-gray-500">今日天氣 - {{selectedDateObj.full}}</div>
+                            <div class="text-sm font-bold text-gray-800">18°C / 體感 16°C</div>
+                        </div>
+                    </div>
+                    <div class="text-xs text-japan-green font-medium">微涼，適合健行</div>
+                </div>
+
+                <!-- Horizontal Date Selector -->
+                <div class="flex overflow-x-auto hide-scrollbar space-x-3 mb-8 pb-2">
+                    <div v-for="d in dates" :key="d.full" @click="selectedDate = d.full"
+                        :class="['flex-shrink-0 w-14 h-18 py-3 rounded-2xl flex flex-col items-center justify-center transition-all', selectedDate === d.full ? 'bg-[#6B8E23] text-white shadow-lg' : 'bg-white text-gray-400']">
+                        <span class="text-[10px] font-bold uppercase mb-1">{{d.day}}</span>
+                        <span class="text-lg font-bold">{{d.date}}</span>
+                    </div>
+                </div>
+
+                <!-- Itinerary List -->
+                <div class="space-y-6">
+                    <div v-for="(item, idx) in filteredItems" :key="idx">
+                        <!-- Flight Style -->
+                        <div v-if="item.category === '航班'" class="bg-gray-800 text-white p-5 rounded-3xl shadow-lg mb-4">
+                            <div class="flex justify-between items-center mb-4">
+                                <span class="text-[10px] bg-white/20 px-2 py-1 rounded-full">{{item.note}}</span>
+                                <i class="fas fa-plane text-japan-green"></i>
+                            </div>
+                            <div class="flex justify-between items-center text-center">
+                                <div><div class="text-xl font-bold">{{item.from}}</div><div class="text-[10px] opacity-60">23:15</div></div>
+                                <div class="flex-1 px-4 border-t border-dashed border-gray-600 relative">
+                                    <i class="fas fa-chevron-right absolute -top-1.5 right-0 text-[10px]"></i>
+                                </div>
+                                <div><div class="text-xl font-bold">{{item.to}}</div><div class="text-[10px] opacity-60">07:50 (+1)</div></div>
+                            </div>
+                        </div>
+
+                        <!-- Standard Card -->
+                        <div v-else @click="goMap(item.title)" class="bg-white p-4 rounded-2xl shadow-sm border border-gray-50 itinerary-card">
+                            <div class="flex justify-between items-start mb-2">
+                                <span :class="getCategoryClass(item.category)" class="text-[10px] px-2 py-0.5 rounded-full text-white">{{item.category}}</span>
+                                <span class="text-[10px] text-gray-400 font-mono">{{item.time}}</span>
+                            </div>
+                            <h3 class="font-bold text-gray-800 mb-1">{{item.title}}</h3>
+                            <div class="text-xs text-gray-500 flex items-center mb-2" v-if="item.hours">
+                                <i class="far fa-clock mr-1"></i> {{item.hours}}
+                            </div>
+                            <p class="text-xs text-gray-400 leading-relaxed">{{item.note}}</p>
+                        </div>
+                        
+                        <!-- Gap / Transport Time -->
+                        <div v-if="idx < filteredItems.length - 1" class="ml-6 py-3 border-l-2 border-dotted border-gray-200 relative">
+                            <div class="absolute -left-[9px] top-1/2 -translate-y-1/2 bg-white px-1">
+                                <i :class="item.transportIcon || 'fas fa-train'" class="text-gray-300 text-xs"></i>
+                            </div>
+                            <span class="ml-4 text-[10px] text-gray-400 italic">預計交通: {{item.gap || '30 mins'}}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. 資訊頁 -->
+            <div v-if="currentTab === 'info'" class="space-y-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">旅行助手</h2>
+                <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-50">
+                    <h3 class="text-sm font-bold text-japan-green mb-4"><i class="fas fa-exchange-alt mr-2"></i>匯率換算</h3>
+                    <div class="flex items-center space-x-3">
+                        <input type="number" v-model="eur" class="flex-1 bg-gray-50 border-none rounded-xl p-3 text-sm" placeholder="EUR 歐元">
+                        <i class="fas fa-arrow-right text-gray-300"></i>
+                        <div class="flex-1 bg-japan-green/10 text-japan-green rounded-xl p-3 text-sm font-bold text-center">
+                            NT$ {{ (eur * 35.2).toFixed(0) }}
+                        </div>
+                    </div>
+                </div>
+                <!-- 住宿資訊 (範例) -->
+                <div class="grid grid-cols-1 gap-4">
+                    <div v-for="hotel in hotels" class="bg-white p-4 rounded-2xl shadow-sm border-l-4 border-japan-green">
+                        <div class="text-xs text-japan-green font-bold mb-1">STAY</div>
+                        <div class="font-bold text-gray-800 text-sm">{{hotel.name}}</div>
+                        <div class="text-[10px] text-gray-400 mt-1">{{hotel.addr}}</div>
+                        <button @click="goMap(hotel.name)" class="mt-3 text-[10px] bg-gray-100 px-3 py-1 rounded-full text-gray-600">
+                            <i class="fas fa-location-arrow mr-1"></i> 開啟導航
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 其他分頁預留... -->
+            <div v-if="currentTab === 'shopping' || currentTab === 'expense'" class="flex flex-col items-center justify-center py-20 text-gray-300">
+                <i class="fas fa-feather-alt text-4xl mb-4"></i>
+                <p class="text-sm">功能建置中，敬請期待</p>
+            </div>
+
+        </main>
+
+        <!-- Floating Add Button -->
+        <button class="fixed bottom-6 right-6 w-14 h-14 bg-japan-red text-white rounded-full shadow-xl flex items-center justify-center text-xl z-50">
+            <i class="fas fa-plus"></i>
+        </button>
+    </div>
+
+    <script>
+        const { createApp, ref, computed } = Vue;
+
+        createApp({
+            setup() {
+                const currentTab = ref('itinerary');
+                const selectedDate = ref('4/26');
+                const eur = ref(1);
+
+                const tabs = [
+                    { id: 'itinerary', icon: 'fas fa-map-marker-alt' },
+                    { id: 'info', icon: 'fas fa-info' },
+                    { id: 'shopping', icon: 'fas fa-shopping-basket' },
+                    { id: 'expense', icon: 'fas fa-coins' }
+                ];
+
+                const dates = [
+                    { day: 'Sat', date: '25', full: '4/25' },
+                    { day: 'Sun', date: '26', full: '4/26' },
+                    { day: 'Mon', date: '27', full: '4/27' },
+                    { day: 'Tue', date: '28', full: '4/28' },
+                    { day: 'Wed', date: '29', full: '4/29' },
+                    { day: 'Thu', date: '30', full: '4/30' },
+                    { day: 'Fri', date: '01', full: '5/1' }
+                ];
+
+                const itineraryData = ref([
+                    { date: '4/25', category: '航班', title: '長榮航空 BR95', from: 'TPE', to: 'MXP', note: '桃園 - 米蘭', time: '23:15', transportIcon: 'fas fa-plane' },
+                    { date: '4/26', category: '住宿', title: 'Terrazza Felicienne', time: '16:00', hours: 'Check-in 14:00+', note: '蘇連多住宿 (2 nights)', gap: '機場巴士 90min', transportIcon: 'fas fa-bus' },
+                    { date: '4/27', category: '景點', title: '阿瑪菲海岸 騎機車', time: '09:00', note: 'Costiera Amalfitana、卡布里島', gap: '自駕機車', transportIcon: 'fas fa-motorcycle' },
+                    { date: '4/28', category: '景點', title: '龐貝古城 Pompeii', time: '10:00', hours: '09:00-19:00', note: '搭乘火車前往 Pompeii Scavi', gap: '火車 30min', transportIcon: 'fas fa-train' },
+                    { date: '4/28', category: '住宿', title: 'Urbanflat Repubblica Square', time: '19:00', note: '羅馬住宿 (3 nights)', transportIcon: 'fas fa-subway' }
+                ]);
+
+                const hotels = [
+                    { name: 'Terrazza Felicienne', addr: 'Sorrento, Italy' },
+                    { name: 'Urbanflat Repubblica Square', addr: 'Rome, Italy' }
+                ];
+
+                const filteredItems = computed(() => {
+                    return itineraryData.value.filter(i => i.date === selectedDate.value);
+                });
+
+                const selectedDateObj = computed(() => {
+                    return dates.find(d => d.full === selectedDate.value);
+                });
+
+                const getCategoryClass = (cat) => {
+                    if (cat === '景點') return 'bg-[#6B8E23]';
+                    if (cat === '住宿') return 'bg-[#4A69BD]';
+                    if (cat === '美食') return 'bg-[#D9534F]';
+                    return 'bg-gray-400';
+                };
+
+                const goMap = (query) => {
+                    window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`, '_blank');
+                };
+
+                return { currentTab, tabs, dates, selectedDate, filteredItems, selectedDateObj, getCategoryClass, goMap, eur, hotels };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
