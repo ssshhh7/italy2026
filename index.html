@@ -3,203 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Italy Trip 2026</title>
+    <title>Italy 2026 Trip</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --japan-green: #6B8E23;
-            --japan-red: #D9534F;
-            --japan-white: #F9F9F7;
-        }
-        body { 
-            font-family: 'Noto Sans JP', 'Noto Sans TC', sans-serif; 
-            background-color: var(--japan-white);
-            -webkit-tap-highlight-color: transparent;
-        }
-        /* 頁首滿版圖 */
-        .banner-container {
-            height: 250px;
-            width: 100%;
-            position: relative;
-            overflow: hidden;
-        }
-        .banner-img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: center 30%;
-        }
-        /* 圓弧銜接效果 */
-        .main-content {
-            margin-top: -40px;
-            border-radius: 40px 40px 0 0;
-            background-color: var(--japan-white);
-            position: relative;
-            z-index: 10;
-            min-height: calc(100vh - 210px);
-        }
-        /* 日系極簡 Tab */
-        .tab-btn {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(8px);
-            transition: all 0.3s ease;
-        }
-        .tab-active {
-            background-color: var(--japan-green) !important;
-            color: white !important;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(107, 142, 35, 0.3);
-        }
+        :root { --j-green: #6B8E23; --j-red: #D9534F; --j-bg: #F9F9F7; }
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: var(--j-bg); -webkit-tap-highlight-color: transparent; }
+        .banner-mask { height: 250px; width: 100%; overflow: hidden; position: relative; }
+        .banner-img { width: 100%; height: 100%; object-fit: cover; object-position: center; }
+        .main-container { margin-top: -40px; border-radius: 40px 40px 0 0; background-color: var(--j-bg); position: relative; z-index: 20; min-height: 800px; }
+        .tab-btn { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(5px); }
+        .tab-active { background-color: var(--j-green) !important; color: white !important; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        /* 行程卡片 */
-        .itinerary-card {
-            border-bottom: 1px solid #e5e7eb;
-            transition: transform 0.2s;
-        }
-        .itinerary-card:active { transform: scale(0.98); }
+        .date-card-active { background-color: var(--j-green); color: white; transform: scale(1.05); box-shadow: 0 4px 10px rgba(107,142,35,0.3); }
+        [v-cloak] { display: none; }
     </style>
 </head>
 <body>
-    <div id="app" v-cloak class="max-w-md mx-auto min-h-screen relative shadow-2xl">
+    <div id="app" v-cloak class="max-w-md mx-auto min-h-screen relative shadow-xl bg-white">
         
-        <!-- Header Banner Area -->
+        <!-- Header Banner -->
         <header class="relative">
-            <div class="banner-container">
-                <!-- 直接使用您提供的圖片連結 -->
-                <img src="https://translate.google.com/website?sl=auto&tl=zh-TW&hl=zh-TW&client=webapp&u=https://v7.fhy.tw/2025/01/20/17/10/7edca8d1033486be52109961.jpg" alt="Banner" class="banner-img">
+            <div class="banner-mask">
+                <img src="https://v7.fhy.tw/2025/01/20/17/10/7edca8d1033486be52109961.jpg" class="banner-img" alt="Banner">
             </div>
-            
-            <!-- Floating Navigation Tabs (右下角浮動) -->
-            <div class="absolute bottom-12 right-4 flex space-x-2 z-20">
-                <button v-for="tab in tabs" :key="tab.id" @click="currentTab = tab.id" 
-                    :class="['tab-btn w-10 h-10 rounded-full flex items-center justify-center text-gray-600 shadow-md', currentTab === tab.id ? 'tab-active' : '']">
-                    <i :class="tab.icon"></i>
+            <!-- Floating Tabs -->
+            <div class="absolute bottom-12 right-4 flex space-x-2 z-30">
+                <button v-for="t in tabs" @click="currentTab = t.id" :class="currentTab === t.id ? 'tab-active' : ''" class="tab-btn w-10 h-10 rounded-full flex items-center justify-center text-gray-500 shadow-lg transition-all">
+                    <i :class="t.icon"></i>
                 </button>
             </div>
         </header>
 
         <!-- Main Content -->
-        <main class="main-content p-5">
+        <main class="main-container p-5">
             
-            <!-- 1. 每日行程表 -->
             <div v-if="currentTab === 'itinerary'">
-                <!-- Weather (自動顯示羅馬預設) -->
-                <div class="flex items-center justify-between bg-white/50 p-4 rounded-2xl mb-6 border border-gray-100 shadow-sm">
+                <!-- Date Selector -->
+                <div class="flex overflow-x-auto hide-scrollbar space-x-3 mb-6 pb-2">
+                    <div v-for="d in dates" :key="d.full" @click="selectedDate = d.full"
+                        :class="selectedDate === d.full ? 'date-card-active' : 'bg-white text-gray-400'"
+                        class="flex-shrink-0 w-14 h-20 rounded-2xl flex flex-col items-center justify-center transition-all cursor-pointer shadow-sm border border-gray-50">
+                        <span class="text-[10px] font-bold uppercase mb-1">{{d.day}}</span>
+                        <span class="text-xl font-bold">{{d.date}}</span>
+                    </div>
+                </div>
+
+                <!-- Weather -->
+                <div class="bg-white p-4 rounded-2xl mb-6 shadow-sm border border-gray-50 flex justify-between items-center">
                     <div class="flex items-center">
-                        <i class="fas fa-cloud-sun text-yellow-500 text-2xl mr-3"></i>
+                        <i class="fas fa-sun text-yellow-500 text-2xl mr-3"></i>
                         <div>
-                            <div class="text-xs text-gray-500">今日天氣 - {{selectedDateObj.full}}</div>
-                            <div class="text-sm font-bold text-gray-800">18°C / 體感 16°C</div>
+                            <div class="text-xs text-gray-400">Italy Local Time</div>
+                            <div class="text-sm font-bold text-gray-700">{{selectedDate}} 行程規劃</div>
                         </div>
                     </div>
-                    <div class="text-xs text-japan-green font-medium">微涼，適合健行</div>
+                    <div class="text-right text-xs text-japan-green">18°C ~ 24°C</div>
                 </div>
 
-                <!-- Horizontal Date Selector -->
-                <div class="flex overflow-x-auto hide-scrollbar space-x-3 mb-8 pb-2">
-                    <div v-for="d in dates" :key="d.full" @click="selectedDate = d.full"
-                        :class="['flex-shrink-0 w-14 h-18 py-3 rounded-2xl flex flex-col items-center justify-center transition-all', selectedDate === d.full ? 'bg-[#6B8E23] text-white shadow-lg' : 'bg-white text-gray-400']">
-                        <span class="text-[10px] font-bold uppercase mb-1">{{d.day}}</span>
-                        <span class="text-lg font-bold">{{d.date}}</span>
-                    </div>
-                </div>
-
-                <!-- Itinerary List -->
-                <div class="space-y-6">
-                    <div v-for="(item, idx) in filteredItems" :key="idx">
-                        <!-- Flight Style -->
-                        <div v-if="item.category === '航班'" class="bg-gray-800 text-white p-5 rounded-3xl shadow-lg mb-4">
-                            <div class="flex justify-between items-center mb-4">
-                                <span class="text-[10px] bg-white/20 px-2 py-1 rounded-full">{{item.note}}</span>
-                                <i class="fas fa-plane text-japan-green"></i>
+                <!-- List -->
+                <div class="space-y-5">
+                    <div v-for="(item, idx) in filteredItinerary" :key="idx" class="relative">
+                        <!-- Flight Card -->
+                        <div v-if="item.type === '航班'" class="bg-gray-800 text-white p-5 rounded-3xl shadow-md">
+                            <div class="flex justify-between text-[10px] mb-4 opacity-70">
+                                <span>{{item.note}}</span>
+                                <i class="fas fa-plane"></i>
                             </div>
                             <div class="flex justify-between items-center text-center">
-                                <div><div class="text-xl font-bold">{{item.from}}</div><div class="text-[10px] opacity-60">23:15</div></div>
-                                <div class="flex-1 px-4 border-t border-dashed border-gray-600 relative">
-                                    <i class="fas fa-chevron-right absolute -top-1.5 right-0 text-[10px]"></i>
+                                <div><div class="text-xl font-bold">{{item.from}}</div><div class="text-xs opacity-60">{{item.time}}</div></div>
+                                <div class="flex-1 border-t border-dashed border-gray-500 mx-4"></div>
+                                <div><div class="text-xl font-bold">{{item.to}}</div><div class="text-xs opacity-60">{{item.arrTime}}</div></div>
+                            </div>
+                        </div>
+
+                        <!-- Normal Card -->
+                        <div v-else @click="goMap(item.title)" class="bg-white p-4 rounded-2xl shadow-sm border-l-4 border-japan-green flex items-start space-x-3">
+                            <div class="bg-gray-50 p-2 rounded-xl text-japan-green">
+                                <i :class="getIcon(item.type)"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-[10px] font-bold text-japan-green">{{item.type}}</span>
+                                    <span class="text-[10px] text-gray-400">{{item.time}}</span>
                                 </div>
-                                <div><div class="text-xl font-bold">{{item.to}}</div><div class="text-[10px] opacity-60">07:50 (+1)</div></div>
+                                <h3 class="font-bold text-gray-800 text-sm mb-1">{{item.title}}</h3>
+                                <p class="text-[11px] text-gray-500 leading-relaxed">{{item.note}}</p>
                             </div>
                         </div>
 
-                        <!-- Standard Card -->
-                        <div v-else @click="goMap(item.title)" class="bg-white p-4 rounded-2xl shadow-sm border border-gray-50 itinerary-card">
-                            <div class="flex justify-between items-start mb-2">
-                                <span :class="getCategoryClass(item.category)" class="text-[10px] px-2 py-0.5 rounded-full text-white">{{item.category}}</span>
-                                <span class="text-[10px] text-gray-400 font-mono">{{item.time}}</span>
-                            </div>
-                            <h3 class="font-bold text-gray-800 mb-1">{{item.title}}</h3>
-                            <div class="text-xs text-gray-500 flex items-center mb-2" v-if="item.hours">
-                                <i class="far fa-clock mr-1"></i> {{item.hours}}
-                            </div>
-                            <p class="text-xs text-gray-400 leading-relaxed">{{item.note}}</p>
-                        </div>
-                        
-                        <!-- Gap / Transport Time -->
-                        <div v-if="idx < filteredItems.length - 1" class="ml-6 py-3 border-l-2 border-dotted border-gray-200 relative">
-                            <div class="absolute -left-[9px] top-1/2 -translate-y-1/2 bg-white px-1">
-                                <i :class="item.transportIcon || 'fas fa-train'" class="text-gray-300 text-xs"></i>
-                            </div>
-                            <span class="ml-4 text-[10px] text-gray-400 italic">預計交通: {{item.gap || '30 mins'}}</span>
+                        <!-- Gap Icon -->
+                        <div v-if="idx < filteredItinerary.length - 1" class="ml-6 py-2 border-l-2 border-dotted border-gray-200">
+                             <div class="pl-4 text-[10px] text-gray-400 italic">
+                                <i class="fas fa-ellipsis-v mr-2"></i> {{item.gap || 'Next Move'}}
+                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 2. 資訊頁 -->
-            <div v-if="currentTab === 'info'" class="space-y-6">
-                <h2 class="text-xl font-bold text-gray-800 mb-4">旅行助手</h2>
-                <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-50">
-                    <h3 class="text-sm font-bold text-japan-green mb-4"><i class="fas fa-exchange-alt mr-2"></i>匯率換算</h3>
-                    <div class="flex items-center space-x-3">
-                        <input type="number" v-model="eur" class="flex-1 bg-gray-50 border-none rounded-xl p-3 text-sm" placeholder="EUR 歐元">
-                        <i class="fas fa-arrow-right text-gray-300"></i>
-                        <div class="flex-1 bg-japan-green/10 text-japan-green rounded-xl p-3 text-sm font-bold text-center">
-                            NT$ {{ (eur * 35.2).toFixed(0) }}
-                        </div>
-                    </div>
-                </div>
-                <!-- 住宿資訊 (範例) -->
-                <div class="grid grid-cols-1 gap-4">
-                    <div v-for="hotel in hotels" class="bg-white p-4 rounded-2xl shadow-sm border-l-4 border-japan-green">
-                        <div class="text-xs text-japan-green font-bold mb-1">STAY</div>
-                        <div class="font-bold text-gray-800 text-sm">{{hotel.name}}</div>
-                        <div class="text-[10px] text-gray-400 mt-1">{{hotel.addr}}</div>
-                        <button @click="goMap(hotel.name)" class="mt-3 text-[10px] bg-gray-100 px-3 py-1 rounded-full text-gray-600">
-                            <i class="fas fa-location-arrow mr-1"></i> 開啟導航
-                        </button>
-                    </div>
-                </div>
+            <!-- Placeholder for other tabs -->
+            <div v-if="currentTab !== 'itinerary'" class="py-20 text-center text-gray-300">
+                <i class="fas fa-hammer text-4xl mb-4"></i>
+                <p>功能開發中...</p>
             </div>
-
-            <!-- 其他分頁預留... -->
-            <div v-if="currentTab === 'shopping' || currentTab === 'expense'" class="flex flex-col items-center justify-center py-20 text-gray-300">
-                <i class="fas fa-feather-alt text-4xl mb-4"></i>
-                <p class="text-sm">功能建置中，敬請期待</p>
-            </div>
-
         </main>
 
-        <!-- Floating Add Button -->
-        <button class="fixed bottom-6 right-6 w-14 h-14 bg-japan-red text-white rounded-full shadow-xl flex items-center justify-center text-xl z-50">
+        <!-- Floating Action Button -->
+        <button class="fixed bottom-6 right-6 w-14 h-14 bg-[#D9534F] text-white rounded-full shadow-xl flex items-center justify-center text-xl z-50">
             <i class="fas fa-plus"></i>
         </button>
     </div>
 
     <script>
         const { createApp, ref, computed } = Vue;
-
         createApp({
             setup() {
                 const currentTab = ref('itinerary');
-                const selectedDate = ref('4/26');
-                const eur = ref(1);
-
+                const selectedDate = ref('4/25');
                 const tabs = [
                     { id: 'itinerary', icon: 'fas fa-map-marker-alt' },
                     { id: 'info', icon: 'fas fa-info' },
@@ -208,48 +131,74 @@
                 ];
 
                 const dates = [
-                    { day: 'Sat', date: '25', full: '4/25' },
-                    { day: 'Sun', date: '26', full: '4/26' },
-                    { day: 'Mon', date: '27', full: '4/27' },
-                    { day: 'Tue', date: '28', full: '4/28' },
-                    { day: 'Wed', date: '29', full: '4/29' },
-                    { day: 'Thu', date: '30', full: '4/30' },
-                    { day: 'Fri', date: '01', full: '5/1' }
+                    { day: 'Sat', date: '25', full: '4/25' }, { day: 'Sun', date: '26', full: '4/26' },
+                    { day: 'Mon', date: '27', full: '4/27' }, { day: 'Tue', date: '28', full: '4/28' },
+                    { day: 'Wed', date: '29', full: '4/29' }, { day: 'Thu', date: '30', full: '4/30' },
+                    { day: 'Fri', date: '01', full: '5/1' }, { day: 'Sat', date: '02', full: '5/2' },
+                    { day: 'Sun', date: '03', full: '5/3' }, { day: 'Mon', date: '04', full: '5/4' },
+                    { day: 'Tue', date: '05', full: '5/5' }, { day: 'Wed', date: '06', full: '5/6' },
+                    { day: 'Thu', date: '07', full: '5/7' }, { day: 'Fri', date: '08', full: '5/8' }
                 ];
 
-                const itineraryData = ref([
-                    { date: '4/25', category: '航班', title: '長榮航空 BR95', from: 'TPE', to: 'MXP', note: '桃園 - 米蘭', time: '23:15', transportIcon: 'fas fa-plane' },
-                    { date: '4/26', category: '住宿', title: 'Terrazza Felicienne', time: '16:00', hours: 'Check-in 14:00+', note: '蘇連多住宿 (2 nights)', gap: '機場巴士 90min', transportIcon: 'fas fa-bus' },
-                    { date: '4/27', category: '景點', title: '阿瑪菲海岸 騎機車', time: '09:00', note: 'Costiera Amalfitana、卡布里島', gap: '自駕機車', transportIcon: 'fas fa-motorcycle' },
-                    { date: '4/28', category: '景點', title: '龐貝古城 Pompeii', time: '10:00', hours: '09:00-19:00', note: '搭乘火車前往 Pompeii Scavi', gap: '火車 30min', transportIcon: 'fas fa-train' },
-                    { date: '4/28', category: '住宿', title: 'Urbanflat Repubblica Square', time: '19:00', note: '羅馬住宿 (3 nights)', transportIcon: 'fas fa-subway' }
+                const itinerary = ref([
+                    // 4/25
+                    { date: '4/25', type: '航班', title: 'Eva air BR 95', from: 'TPE', to: 'MXP', time: '23:15', arrTime: '07:50(+1)', note: '桃園機場 - 馬爾彭薩機場' },
+                    // 4/26
+                    { date: '4/26', type: '航班', title: 'Ryanair FR5914', from: 'MXP', to: 'NAP', time: '10:45', arrTime: '12:15', note: 'Milan - Naples (國內線)' },
+                    { date: '4/26', type: '其他', title: '機場巴士 Curreri', time: '14:30', note: 'NAP機場 - 蘇連多 (Piazza De Curtis)', gap: '車程 90min' },
+                    { date: '4/26', type: '住宿', title: 'Terrazza Felicienne', time: '16:00', note: '蘇連多住宿 (2 nights)', gap: '入住休息' },
+                    // 4/27
+                    { date: '4/27', type: '景點', title: '阿瑪菲海岸 騎機車', time: '09:00', note: 'Costiera Amalfitana、卡布里島', gap: '自駕行程' },
+                    { date: '4/27', type: '住宿', title: 'Terrazza Felicienne', time: '19:00', note: '蘇連多住宿' },
+                    // 4/28
+                    { date: '4/28', type: '其他', title: '蘇連多-龐貝 火車', time: '09:00', note: 'Sorrento - Pompei Scavi', gap: '40 mins' },
+                    { date: '4/28', type: '景點', title: '龐貝古城 Pompeii', time: '10:00', note: 'Pompei Scavi Villa Dei Misteri', gap: '下午前往拿坡里' },
+                    { date: '4/28', type: '其他', title: '拿坡里-羅馬 ITALO', time: '17:30', note: 'Napoli 17:30 - 18:45 Roma Termini', gap: '1hr 15min' },
+                    { date: '4/28', type: '住宿', title: 'Urbanflat Repubblica Square', time: '19:00', note: '羅馬住宿 (3 nights)' },
+                    // 4/29
+                    { date: '4/29', type: '景點', title: '梵蒂岡博物館 / 聖彼得大教堂', time: '09:30', note: '拉斐爾廳＋西斯汀禮拜堂、納沃納廣場' },
+                    { date: '4/29', type: '景點', title: '萬神殿 Pantheon', time: '17:00', note: '古羅馬建築奇蹟' },
+                    { date: '4/29', type: '美食', title: 'Trattoria Vecchia Roma', time: '19:00', note: '地窖餐廳晚餐' },
+                    // 4/30
+                    { date: '4/30', type: '美食', title: 'Trattoria Vecchia Roma', time: '19:30', note: '地窖餐廳晚餐', gap: '羅馬市區遊覽' },
+                    { date: '4/30', type: '住宿', title: 'Urbanflat Repubblica Square', time: '21:00', note: '羅馬住宿' },
+                    // 5/1
+                    { date: '5/1', type: '其他', title: '羅馬-托斯卡尼 租車', time: '09:00', note: '開始 3 天自駕行程' },
+                    { date: '5/1', type: '住宿', title: 'Abbadia Sicille Relais', time: '16:00', note: '托斯卡尼住宿 (1 night)' },
+                    // 5/2
+                    { date: '5/2', type: '住宿', title: 'Podere La Doccia', time: '16:00', note: '托斯卡尼住宿 (1 night)' },
+                    // 5/3
+                    { date: '5/3', type: '其他', title: '還車 - 佛羅倫斯', time: '14:00', note: 'Firenze 還車', gap: '轉為步行/大眾運輸' },
+                    { date: '5/3', type: '住宿', title: 'Zeno Apartment by Mamo Florence', time: '16:00', note: '佛羅倫斯住宿 (3 nights)' },
+                    // 5/4
+                    { date: '5/4', type: '景點', title: '百花大教堂建築群', time: '08:15', note: '穹頂、鐘樓、洗禮堂、大教堂博物館' },
+                    { date: '5/4', type: '住宿', title: 'Zeno Apartment', time: '19:00', note: '佛羅倫斯住宿' },
+                    // 5/5
+                    { date: '5/5', type: '景點', title: '烏菲茲美術館', time: '08:45', note: 'Uffizi Gallery' },
+                    { date: '5/5', type: '景點', title: '學院美術館', time: '14:45', note: '看大衛像' },
+                    // 5/6
+                    { date: '5/6', type: '其他', title: '佛羅倫斯-威尼斯 火車', time: '09:00', note: '2小時車程 Firenze - Venezia', gap: '2 hrs' },
+                    { date: '5/6', type: '住宿', title: 'Casanova ai Tolentini', time: '14:00', note: '威尼斯住宿 (1 night)' },
+                    // 5/7
+                    { date: '5/7', type: '其他', title: '威尼斯-米蘭 火車', time: '09:00', note: '2.5小時車程 Venezia - Milano', gap: '2.5 hrs' },
+                    { date: '5/7', type: '景點', title: '最後的晚餐', time: '15:00', note: '米蘭必訪古蹟' },
+                    { date: '5/7', type: '住宿', title: 'Binario Verticale', time: '18:00', note: '米蘭住宿 (1 night)' },
+                    // 5/8
+                    { date: '5/8', type: '航班', title: 'Eva air BR 96', from: 'MXP', to: 'TPE', time: '11:15', arrTime: '05:55(+1)', note: '馬爾彭薩機場 - 桃園機場' }
                 ]);
 
-                const hotels = [
-                    { name: 'Terrazza Felicienne', addr: 'Sorrento, Italy' },
-                    { name: 'Urbanflat Repubblica Square', addr: 'Rome, Italy' }
-                ];
-
-                const filteredItems = computed(() => {
-                    return itineraryData.value.filter(i => i.date === selectedDate.value);
+                const filteredItinerary = computed(() => {
+                    return itinerary.value.filter(i => i.date === selectedDate.value);
                 });
 
-                const selectedDateObj = computed(() => {
-                    return dates.find(d => d.full === selectedDate.value);
-                });
-
-                const getCategoryClass = (cat) => {
-                    if (cat === '景點') return 'bg-[#6B8E23]';
-                    if (cat === '住宿') return 'bg-[#4A69BD]';
-                    if (cat === '美食') return 'bg-[#D9534F]';
-                    return 'bg-gray-400';
+                const getIcon = (type) => {
+                    const map = { '景點': 'fas fa-map-marked-alt', '住宿': 'fas fa-bed', '美食': 'fas fa-utensils', '其他': 'fas fa-exchange-alt' };
+                    return map[type] || 'fas fa-info-circle';
                 };
 
-                const goMap = (query) => {
-                    window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`, '_blank');
-                };
+                const goMap = (q) => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`, '_blank');
 
-                return { currentTab, tabs, dates, selectedDate, filteredItems, selectedDateObj, getCategoryClass, goMap, eur, hotels };
+                return { currentTab, tabs, dates, selectedDate, filteredItinerary, getIcon, goMap };
             }
         }).mount('#app');
     </script>
