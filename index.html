@@ -51,16 +51,21 @@
                     </div>
                 </div>
 
-                <!-- Weather -->
+                <!-- City & Weather Header -->
                 <div class="bg-white p-4 rounded-2xl mb-6 shadow-sm border border-gray-50 flex justify-between items-center">
                     <div class="flex items-center">
-                        <i class="fas fa-sun text-yellow-500 text-2xl mr-3"></i>
+                        <!-- 左側：地點圖示與純地點名稱 -->
+                        <i class="fas fa-map-marker-alt text-red-500 text-2xl mr-3"></i>
                         <div>
-                            <div class="text-xs text-gray-400">Italy Local Time</div>
-                            <div class="text-sm font-bold text-gray-700">{{selectedDate}} 行程規劃</div>
+                            <!-- 只顯示地點，不再顯示日期與 Current Destination -->
+                            <div class="text-lg font-bold text-gray-800 leading-tight">{{currentCity}}</div>
                         </div>
                     </div>
-                    <div class="text-right text-xs text-japan-green">18°C ~ 24°C</div>
+                    <!-- 右側：天氣圖示與氣溫 -->
+                    <div class="text-right flex flex-col items-end">
+                        <i :class="currentWeather.icon" class="text-yellow-500 text-xl mb-1"></i>
+                        <div class="text-[11px] text-gray-500 font-bold">{{currentWeather.temp}}</div>
+                    </div>
                 </div>
 
                 <!-- List -->
@@ -112,9 +117,44 @@
         </main>
 
         <!-- Floating Action Button -->
-        <button class="fixed bottom-6 right-6 w-14 h-14 bg-[#D9534F] text-white rounded-full shadow-xl flex items-center justify-center text-xl z-50">
+        <button @click="openModal" class="fixed bottom-6 right-6 w-14 h-14 bg-[#D9534F] text-white rounded-full shadow-xl flex items-center justify-center text-xl z-50 hover:scale-110 transition-transform">
             <i class="fas fa-plus"></i>
         </button>
+
+        <!-- 新增行程彈窗 -->
+        <div v-if="showAddModal" @click.self="showAddModal = false" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-6">
+            <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl">
+                <h2 class="text-xl font-bold mb-4 text-gray-800">新增 {{selectedDate}} 行程</h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-xs text-gray-400 block mb-1">類別</label>
+                        <select v-model="newItem.type" style="font-size: 16px;" class="w-full bg-gray-50 border-none rounded-xl p-3 text-sm">
+                            <option>景點</option><option>美食</option><option>住宿</option><option>交通</option><option>其他</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 block mb-1">名稱</label>
+                        <input v-model="newItem.title" type="text" placeholder="例如：萬神殿" class="w-full bg-gray-50 border-none rounded-xl p-3 text-sm">
+                    </div>
+                    <div class="flex space-x-3">
+                        <div class="flex-1">
+                            <label class="text-xs text-gray-400 block mb-1">時間</label>
+                            <input v-model="newItem.time" type="text" placeholder="14:00" class="w-full bg-gray-50 border-none rounded-xl p-3 text-sm">
+                        </div>
+                        <div class="flex-1">
+                            <label class="text-xs text-gray-400 block mb-1">備註</label>
+                            <input v-model="newItem.note" type="text" placeholder="記得預約" class="w-full bg-gray-50 border-none rounded-xl p-3 text-sm">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex space-x-3 mt-6">
+                    <button @click="showAddModal = false" class="flex-1 py-3 rounded-xl text-gray-500 font-bold text-sm bg-gray-100">取消</button>
+                    <button @click="addItem" class="flex-1 py-3 rounded-xl text-white font-bold text-sm bg-red-500">儲存</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -122,6 +162,16 @@
         createApp({
             setup() {
                 const currentTab = ref('itinerary');
+                // 控制彈窗顯示/隱藏
+                const showAddModal = ref(false);
+                // 存儲新行程的輸入內容
+                const newItem = ref({
+                    type: '景點',
+                    title: '',
+                    time: '',
+                    note: '',
+                    gap: ''
+                });
                 const selectedDate = ref('4/25');
                 const tabs = [
                     { id: 'itinerary', icon: 'fas fa-map-marker-alt' },
@@ -131,64 +181,103 @@
                 ];
 
                 const dates = [
-                    { day: 'Sat', date: '25', full: '4/25' }, { day: 'Sun', date: '26', full: '4/26' },
-                    { day: 'Mon', date: '27', full: '4/27' }, { day: 'Tue', date: '28', full: '4/28' },
-                    { day: 'Wed', date: '29', full: '4/29' }, { day: 'Thu', date: '30', full: '4/30' },
-                    { day: 'Fri', date: '01', full: '5/1' }, { day: 'Sat', date: '02', full: '5/2' },
-                    { day: 'Sun', date: '03', full: '5/3' }, { day: 'Mon', date: '04', full: '5/4' },
-                    { day: 'Tue', date: '05', full: '5/5' }, { day: 'Wed', date: '06', full: '5/6' },
-                    { day: 'Thu', date: '07', full: '5/7' }, { day: 'Fri', date: '08', full: '5/8' }
+                    { day: 'Sat', date: '25', full: '4/25', loc: '義大利米蘭', temp: '12°C - 20°C', icon: 'fas fa-cloud-sun' },
+                    { day: 'Sun', date: '26', full: '4/26', loc: '拿坡里-蘇連多', temp: '15°C - 23°C', icon: 'fas fa-sun' },
+                    { day: 'Mon', date: '27', full: '4/27', loc: '阿瑪菲海岸', temp: '16°C - 24°C', icon: 'fas fa-sun' },
+                    { day: 'Tue', date: '28', full: '4/28', loc: '龐貝 / 羅馬', temp: '14°C - 22°C', icon: 'fas fa-cloud' },
+                    { day: 'Wed', date: '29', full: '4/29', loc: '羅馬', temp: '15°C - 23°C', icon: 'fas fa-sun' },
+                    { day: 'Thu', date: '30', full: '4/30', loc: '羅馬', temp: '15°C - 23°C', icon: 'fas fa-sun' },
+                    { day: 'Fri', date: '01', full: '5/1', loc: '托斯卡尼', temp: '13°C - 21°C', icon: 'fas fa-cloud-sun' },
+                    { day: 'Sat', date: '02', full: '5/2', loc: '托斯卡尼', temp: '13°C - 21°C', icon: 'fas fa-sun' },
+                    { day: 'Sun', date: '03', full: '5/3', loc: '佛羅倫斯', temp: '14°C - 22°C', icon: 'fas fa-cloud-sun' },
+                    { day: 'Mon', date: '04', full: '5/4', loc: '佛羅倫斯', temp: '14°C - 22°C', icon: 'fas fa-sun' },
+                    { day: 'Tue', date: '05', full: '5/5', loc: '佛羅倫斯', temp: '14°C - 22°C', icon: 'fas fa-sun' },
+                    { day: 'Wed', date: '06', full: '5/6', loc: '威尼斯', temp: '12°C - 19°C', icon: 'fas fa-cloud' },
+                    { day: 'Thu', date: '07', full: '5/7', loc: '米蘭', temp: '13°C - 20°C', icon: 'fas fa-cloud-showers-heavy' },
+                    { day: 'Fri', date: '08', full: '5/8', loc: '回台灣', temp: '22°C - 28°C', icon: 'fas fa-sun' }
                 ];
 
                 const itinerary = ref([
-                    // 4/25
-                    { date: '4/25', type: '航班', title: 'Eva air BR 95', from: 'TPE', to: 'MXP', time: '23:15', arrTime: '07:50(+1)', note: '桃園機場 - 馬爾彭薩機場' },
-                    // 4/26
-                    { date: '4/26', type: '航班', title: 'Ryanair FR5914', from: 'MXP', to: 'NAP', time: '10:45', arrTime: '12:15', note: 'Milan - Naples (國內線)' },
-                    { date: '4/26', type: '其他', title: '機場巴士 Curreri', time: '14:30', note: 'NAP機場 - 蘇連多 (Piazza De Curtis)', gap: '車程 90min' },
-                    { date: '4/26', type: '住宿', title: 'Terrazza Felicienne', time: '16:00', note: '蘇連多住宿 (2 nights)', gap: '入住休息' },
-                    // 4/27
-                    { date: '4/27', type: '景點', title: '阿瑪菲海岸 騎機車', time: '09:00', note: 'Costiera Amalfitana、卡布里島', gap: '自駕行程' },
-                    { date: '4/27', type: '住宿', title: 'Terrazza Felicienne', time: '19:00', note: '蘇連多住宿' },
-                    // 4/28
+                    // 4/25 Sat.
+                    { date: '4/25', type: '航班', title: '長榮航空 BR 95', from: 'TPE', to: 'MXP', time: '23:15', arrTime: '07:50(+1)', note: '桃園機場 - 米蘭馬爾彭薩' },
+                    
+                    // 4/26 Sun.
+                    { date: '4/26', type: '航班', title: 'Ryanair FR5914', from: 'MXP', to: 'NAP', time: '10:45', arrTime: '12:15', note: '米蘭 - 拿坡里 (國內線)', gap: '機場接駁' },
+                    { date: '4/26', type: '其他', title: '機場巴士 Curreri', time: '14:30', note: 'NAP機場 - 蘇連多 Piazza De Curtis', gap: '90 mins' },
+                    { date: '4/26', type: '住宿', title: 'Terrazza Felicienne', time: '16:00', note: '蘇連多住宿 (Day 1)', location: 'Sorrento' },
+                    
+                    // 4/27 Mon.
+                    { date: '4/27', type: '景點', title: '阿瑪菲海岸 騎機車', time: '09:00', note: 'Costiera Amalfitana、卡布里島', gap: '自駕機車' },
+                    { date: '4/27', type: '住宿', title: 'Terrazza Felicienne', time: '19:00', note: '蘇連多住宿 (Day 2)' },
+                    
+                    // 4/28 Tue.
                     { date: '4/28', type: '其他', title: '蘇連多-龐貝 火車', time: '09:00', note: 'Sorrento - Pompei Scavi', gap: '40 mins' },
-                    { date: '4/28', type: '景點', title: '龐貝古城 Pompeii', time: '10:00', note: 'Pompei Scavi Villa Dei Misteri', gap: '下午前往拿坡里' },
+                    { date: '4/28', type: '景點', title: '龐貝古城 Pompeii', time: '10:00', note: 'Villa Dei Misteri 遺址參觀', gap: '下午前往拿坡里' },
                     { date: '4/28', type: '其他', title: '拿坡里-羅馬 ITALO', time: '17:30', note: 'Napoli 17:30 - 18:45 Roma Termini', gap: '1hr 15min' },
-                    { date: '4/28', type: '住宿', title: 'Urbanflat Repubblica Square', time: '19:00', note: '羅馬住宿 (3 nights)' },
-                    // 4/29
+                    { date: '4/28', type: '景點', title: '特雷維噴泉 Fontana di Trevi', time: '20:00', note: '許願池夜景' },
+                    { date: '4/28', type: '住宿', title: 'Urbanflat Repubblica Square', time: '21:30', note: '羅馬住宿 (Day 1)' },
+                    
+                    // 4/29 Wed.
                     { date: '4/29', type: '景點', title: '梵蒂岡博物館 / 聖彼得大教堂', time: '09:30', note: '拉斐爾廳＋西斯汀禮拜堂、納沃納廣場' },
-                    { date: '4/29', type: '景點', title: '萬神殿 Pantheon', time: '17:00', note: '古羅馬建築奇蹟' },
-                    { date: '4/29', type: '美食', title: 'Trattoria Vecchia Roma', time: '19:00', note: '地窖餐廳晚餐' },
-                    // 4/30
-                    { date: '4/30', type: '美食', title: 'Trattoria Vecchia Roma', time: '19:30', note: '地窖餐廳晚餐', gap: '羅馬市區遊覽' },
-                    { date: '4/30', type: '住宿', title: 'Urbanflat Repubblica Square', time: '21:00', note: '羅馬住宿' },
-                    // 5/1
-                    { date: '5/1', type: '其他', title: '羅馬-托斯卡尼 租車', time: '09:00', note: '開始 3 天自駕行程' },
-                    { date: '5/1', type: '住宿', title: 'Abbadia Sicille Relais', time: '16:00', note: '托斯卡尼住宿 (1 night)' },
-                    // 5/2
-                    { date: '5/2', type: '住宿', title: 'Podere La Doccia', time: '16:00', note: '托斯卡尼住宿 (1 night)' },
-                    // 5/3
-                    { date: '5/3', type: '其他', title: '還車 - 佛羅倫斯', time: '14:00', note: 'Firenze 還車', gap: '轉為步行/大眾運輸' },
-                    { date: '5/3', type: '住宿', title: 'Zeno Apartment by Mamo Florence', time: '16:00', note: '佛羅倫斯住宿 (3 nights)' },
-                    // 5/4
+                    { date: '4/29', type: '景點', title: '萬神殿 Pantheon', time: '17:00', note: '古羅馬建築參觀' },
+                    { date: '4/29', type: '美食', title: 'Trattoria Vecchia Roma', time: '19:00', note: '地窖餐廳 (Day 1)' },
+                    { date: '4/29', type: '住宿', title: 'Urbanflat Repubblica Square', time: '21:00', note: '羅馬住宿 (Day 2)' },
+                    
+                    // 4/30 Thu.
+                    { date: '4/30', type: '景點', title: '羅馬競技場與周邊', time: '09:00', note: 'COLOSSEUM, ROMAN FORUM, 真理之口' },
+                    { date: '4/30', type: '購物', title: '西班牙廣場 / Rimowa', time: '15:00', note: 'Piazza di Spagna 逛街購物' },
+                    { date: '4/30', type: '美食', title: 'Trattoria Vecchia Roma', time: '19:30', note: '地窖餐廳 (Day 2)' },
+                    { date: '4/30', type: '住宿', title: 'Urbanflat Repubblica Square', time: '21:30', note: '羅馬住宿 (Day 3)' },
+                    
+                    // 5/1 Fri.
+                    { date: '5/1', type: '其他', title: '羅馬-托斯卡尼 租車', time: '08:30', note: '開始 3 天自駕之旅', gap: '開車' },
+                    { date: '5/1', type: '景點', title: '天空之城 / 奧爾恰山谷', time: '11:00', note: 'Civita di Bagnoregio, Pozzo di San Patrizio, Val d’Orcia' },
+                    { date: '5/1', type: '住宿', title: 'Abbadia Sicille Relais', time: '17:00', note: '托斯卡尼古堡住宿' },
+                    
+                    // 5/2 Sat.
+                    { date: '5/2', type: '景點', title: '托斯卡尼經典小鎮', time: '09:00', note: 'Pienza, Montepulciano(新月), Cortona(艷陽下), Arezzo(美麗人生)' },
+                    { date: '5/2', type: '住宿', title: 'Podere La Doccia', time: '18:00', note: '托斯卡尼莊園住宿' },
+                    
+                    // 5/3 Sun.
+                    { date: '5/3', type: '景點', title: '錫耶納 / The Mall', time: '09:00', note: 'Siena, San Gimignano, outlet 購物', gap: '開車' },
+                    { date: '5/3', type: '其他', title: '佛羅倫斯 還車', time: '16:00', note: 'Firenze 還車', gap: '步行' },
+                    { date: '5/3', type: '住宿', title: 'Zeno Apartment', time: '18:00', note: '佛羅倫斯住宿 (Day 1)' },
+                    
+                    // 5/4 Mon.
                     { date: '5/4', type: '景點', title: '百花大教堂建築群', time: '08:15', note: '穹頂、鐘樓、洗禮堂、大教堂博物館' },
-                    { date: '5/4', type: '住宿', title: 'Zeno Apartment', time: '19:00', note: '佛羅倫斯住宿' },
-                    // 5/5
-                    { date: '5/5', type: '景點', title: '烏菲茲美術館', time: '08:45', note: 'Uffizi Gallery' },
+                    { date: '5/4', type: '美食', title: '中央市場 / Grom 冰淇淋', time: '12:00', note: '梅迪奇禮拜堂、領主廣場、金豬' },
+                    { date: '5/4', type: '景點', title: '老橋 / 米開朗基羅廣場', time: '17:00', note: '夕陽與夜景、SMN 藥妝店、聖十字教堂' },
+                    
+                    // 5/5 Tue.
+                    { date: '5/5', type: '景點', title: '烏菲茲美術館', time: '08:45', note: 'Uffizi Gallery, Giunti Odeon 戲院書店' },
                     { date: '5/5', type: '景點', title: '學院美術館', time: '14:45', note: '看大衛像' },
-                    // 5/6
-                    { date: '5/6', type: '其他', title: '佛羅倫斯-威尼斯 火車', time: '09:00', note: '2小時車程 Firenze - Venezia', gap: '2 hrs' },
+                    { date: '5/5', type: '住宿', title: 'Zeno Apartment', time: '19:00', note: '佛羅倫斯住宿 (Day 3)' },
+                    
+                    // 5/6 Wed.
+                    { date: '5/6', type: '其他', title: '佛羅倫斯-威尼斯 火車', time: '09:00', note: 'Firenze - Venezia S.L.', gap: '2 hrs' },
                     { date: '5/6', type: '住宿', title: 'Casanova ai Tolentini', time: '14:00', note: '威尼斯住宿 (1 night)' },
-                    // 5/7
-                    { date: '5/7', type: '其他', title: '威尼斯-米蘭 火車', time: '09:00', note: '2.5小時車程 Venezia - Milano', gap: '2.5 hrs' },
-                    { date: '5/7', type: '景點', title: '最後的晚餐', time: '15:00', note: '米蘭必訪古蹟' },
+                    
+                    // 5/7 Thu.
+                    { date: '5/7', type: '其他', title: '威尼斯-米蘭 火車', time: '09:00', note: 'Venezia - Milano', gap: '2.5 hrs' },
+                    { date: '5/7', type: '景點', title: '最後的晚餐', time: '15:00', note: '達文西名畫參觀' },
                     { date: '5/7', type: '住宿', title: 'Binario Verticale', time: '18:00', note: '米蘭住宿 (1 night)' },
-                    // 5/8
-                    { date: '5/8', type: '航班', title: 'Eva air BR 96', from: 'MXP', to: 'TPE', time: '11:15', arrTime: '05:55(+1)', note: '馬爾彭薩機場 - 桃園機場' }
+                    
+                    // 5/8 Fri.
+                    { date: '5/8', type: '航班', title: '長榮航空 BR 96', from: 'MXP', to: 'TPE', time: '11:15', arrTime: '05:55(+1)', note: '米蘭馬爾彭薩 - 桃園機場' }
                 ]);
 
                 const filteredItinerary = computed(() => {
                     return itinerary.value.filter(i => i.date === selectedDate.value);
+                });
+
+                const currentCity = computed(() => {
+                    const found = dates.find(d => d.full === selectedDate.value);
+                    return found ? found.loc : '行程規劃';
+                });
+
+                const currentWeather = computed(() => {
+                    const found = dates.find(d => d.full === selectedDate.value);
+                    return found ? { temp: found.temp, icon: found.icon } : { temp: '--°C', icon: 'fas fa-question' };
                 });
 
                 const getIcon = (type) => {
@@ -198,7 +287,30 @@
 
                 const goMap = (q) => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`, '_blank');
 
-                return { currentTab, tabs, dates, selectedDate, filteredItinerary, getIcon, goMap };
+                // 打開彈窗
+                const openModal = () => {
+                    showAddModal.value = true;
+                };
+
+                // 儲存新行程
+                const addItem = () => {
+                    if (!newItem.value.title) {
+                        alert('請輸入行程名稱！');
+                        return;
+                    }
+                    // 將新行程加入到清單中（會自動對應目前選中的日期）
+                    itinerary.value.push({
+                        ...newItem.value,
+                        date: selectedDate.value
+                    });
+                    
+                    // 重置輸入框並關閉彈窗
+                    newItem.value = { type: '景點', title: '', time: '', note: '', gap: '' };
+                    showAddModal.value = false;
+                };
+
+                return { currentTab, tabs, dates, selectedDate, filteredItinerary, currentCity, currentWeather, getIcon, goMap, showAddModal, newItem, openModal, addItem };
+                
             }
         }).mount('#app');
     </script>
