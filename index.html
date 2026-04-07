@@ -42,7 +42,7 @@
             
             <div v-if="currentTab === 'itinerary'">
                 <!-- Date Selector -->
-                <div class="flex overflow-x-auto hide-scrollbar space-x-3 mb-6 pb-2">
+                <div class="sticky top-0 z-50 bg-[#F9FAFB] flex overflow-x-auto hide-scrollbar space-x-3 mb-6 py-4 px-6 -mx-6">
                     <div v-for="d in dates" :key="d.full" @click="selectedDate = d.full"
                         :class="selectedDate === d.full ? 'date-card-active' : 'bg-white text-gray-400'"
                         class="flex-shrink-0 w-14 h-20 rounded-2xl flex flex-col items-center justify-center transition-all cursor-pointer shadow-sm border border-gray-50">
@@ -129,8 +129,12 @@
                 <div class="space-y-4">
                     <div>
                         <label class="text-xs text-gray-400 block mb-1">類別</label>
-                        <select v-model="newItem.type" style="font-size: 16px;" class="w-full bg-gray-50 border-none rounded-xl p-3 text-sm">
-                            <option>景點</option><option>美食</option><option>住宿</option><option>交通</option><option>其他</option>
+                        <select v-model="newItem.type" class="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-gray-700 h-[52px] appearance-none cursor-pointer shadow-none outline-none" style="font-size: 16px; -webkit-appearance: none; -webkit-tap-highlight-color: transparent;">
+                            <option>景點</option>
+                            <option>美食</option>
+                            <option>住宿</option>
+                            <option>交通</option>
+                            <option>其他</option>
                         </select>
                     </div>
                     <div>
@@ -218,35 +222,47 @@
                     { date: '4/28', type: '住宿', title: 'Urbanflat Repubblica Square', time: '21:30', note: '羅馬住宿 (Day 1)' },
                     
                     // 4/29 Wed.
-                    { date: '4/29', type: '景點', title: '梵蒂岡博物館 / 聖彼得大教堂', time: '09:30', note: '拉斐爾廳＋西斯汀禮拜堂、納沃納廣場' },
-                    { date: '4/29', type: '景點', title: '萬神殿 Pantheon', time: '17:00', note: '古羅馬建築參觀' },
-                    { date: '4/29', type: '美食', title: 'Trattoria Vecchia Roma', time: '19:00', note: '地窖餐廳 (Day 1)' },
-                    { date: '4/29', type: '住宿', title: 'Urbanflat Repubblica Square', time: '21:00', note: '羅馬住宿 (Day 2)' },
+                    { date: '4/29', type: '景點', title: '梵蒂岡深度遊', time: '09:30', note: '博物館、拉斐爾廳、西斯汀、聖彼得', gap: '重要預約' },
+                    { date: '4/29', type: '景點', title: '納沃納廣場 Piazza Navona', time: '15:30', note: '噴泉藝術巡禮' },
+                    { date: '4/29', type: '景點', title: '萬神殿 Pantheon', time: '17:00', note: '古羅馬神殿' },
+                    { date: '4/29', type: '美食', title: 'Trattoria Vecchia Roma', time: '19:00', note: '地窖餐廳晚餐' },
+                    { date: '4/29', type: '住宿', title: 'Urbanflat Repubblica', time: '21:00', note: '羅馬住宿' },
                     
                     // 4/30 Thu.
-                    { date: '4/30', type: '景點', title: '羅馬競技場與周邊', time: '09:00', note: 'COLOSSEUM, ROMAN FORUM, 真理之口' },
-                    { date: '4/30', type: '購物', title: '西班牙廣場 / Rimowa', time: '15:00', note: 'Piazza di Spagna 逛街購物' },
-                    { date: '4/30', type: '美食', title: 'Trattoria Vecchia Roma', time: '19:30', note: '地窖餐廳 (Day 2)' },
-                    { date: '4/30', type: '住宿', title: 'Urbanflat Repubblica Square', time: '21:30', note: '羅馬住宿 (Day 3)' },
+                    { date: '4/30', type: '景點', title: '古羅馬古蹟群', time: '09:00', note: '競技場、古羅馬廣塲、帕拉提諾之丘' },
+                    { date: '4/30', type: '景點', title: '真理之口 Bocca della Verità', time: '14:30', note: '希臘聖母堂門廊 (需排隊拍照)' },
+                    { date: '4/30', type: '景點', title: '西班牙廣場 Piazza di Spagna', time: '16:30', note: '破船噴泉、逛街大道購物' },
+                    { date: '4/30', type: '美食', title: 'Trattoria Vecchia Roma', time: '19:30', note: '地窖餐廳二訪' },
+                    { date: '4/30', type: '住宿', title: 'Urbanflat Repubblica', time: '21:30', note: '羅馬住宿' },
                     
                     // 5/1 Fri.
-                    { date: '5/1', type: '其他', title: '羅馬-托斯卡尼 租車', time: '08:30', note: '開始 3 天自駕之旅', gap: '開車' },
-                    { date: '5/1', type: '景點', title: '天空之城 / 奧爾恰山谷', time: '11:00', note: 'Civita di Bagnoregio, Pozzo di San Patrizio, Val d’Orcia' },
-                    { date: '5/1', type: '住宿', title: 'Abbadia Sicille Relais', time: '17:00', note: '托斯卡尼古堡住宿' },
+                    { date: '5/1', type: '其他', title: '羅馬-托斯卡尼 租車', time: '08:30', note: '自駕開始', gap: '開車' },
+                    { date: '5/1', type: '景點', title: '天空之城 Civita di Bagnoregio', time: '11:00', note: '孤島古城，需走長橋進入 (需門票)' },
+                    { date: '5/1', type: '景點', title: '奧爾恰山谷 Val d\'Orcia', time: '15:30', note: '托斯卡尼經典絲柏之路、蜿蜒小徑攝影' },
+                    { date: '5/1', type: '住宿', title: 'Abbadia Sicille Relais', time: '17:00', note: '古堡住宿' },
                     
                     // 5/2 Sat.
-                    { date: '5/2', type: '景點', title: '托斯卡尼經典小鎮', time: '09:00', note: 'Pienza, Montepulciano(新月), Cortona(艷陽下), Arezzo(美麗人生)' },
-                    { date: '5/2', type: '住宿', title: 'Podere La Doccia', time: '18:00', note: '托斯卡尼莊園住宿' },
+                    { date: '5/2', type: '景點', title: '托斯卡尼小鎮之旅', time: '09:00', note: 'Pienza, Montepulciano' },
+                    { date: '5/2', type: '景點', title: '古城巡禮', time: '14:00', note: 'Cortona, Arezzo' },
+                    { date: '5/2', type: '住宿', title: 'Podere La Doccia', time: '18:00', note: '莊園住宿 1晚' },
                     
                     // 5/3 Sun.
-                    { date: '5/3', type: '景點', title: '錫耶納 / The Mall', time: '09:00', note: 'Siena, San Gimignano, outlet 購物', gap: '開車' },
-                    { date: '5/3', type: '其他', title: '佛羅倫斯 還車', time: '16:00', note: 'Firenze 還車', gap: '步行' },
-                    { date: '5/3', type: '住宿', title: 'Zeno Apartment', time: '18:00', note: '佛羅倫斯住宿 (Day 1)' },
+                    { date: '5/3', type: '景點', title: '錫耶納 Siena', time: '09:00', note: '世界遺產古城' },
+                    { date: '5/3', type: '景點', title: '聖吉米尼亞諾 San Gimignano', time: '11:30', note: '中世紀塔之城、世界冠軍冰淇淋' },
+                    { date: '5/3', type: '購物', title: 'The Mall Outlet', time: '14:30', note: '精品購物行程 (Gucci, Prada等)' },
+                    { date: '5/3', type: '其他', title: '佛羅倫斯 還車', time: '17:00', note: 'Firenze 還車' },
+                    { date: '5/3', type: '住宿', title: 'Zeno Apartment', time: '19:00', note: '佛羅倫斯 3晚連住' },
                     
                     // 5/4 Mon.
-                    { date: '5/4', type: '景點', title: '百花大教堂建築群', time: '08:15', note: '穹頂、鐘樓、洗禮堂、大教堂博物館' },
-                    { date: '5/4', type: '美食', title: '中央市場 / Grom 冰淇淋', time: '12:00', note: '梅迪奇禮拜堂、領主廣場、金豬' },
-                    { date: '5/4', type: '景點', title: '老橋 / 米開朗基羅廣場', time: '17:00', note: '夕陽與夜景、SMN 藥妝店、聖十字教堂' },
+                    { date: '5/4', type: '景點', title: '聖母百花大教堂群', time: '08:15', note: '穹頂、鐘樓、洗禮堂、博物館' },
+                    { date: '5/4', type: '美食', title: '中央市場', time: '12:00', note: 'Mercato Centrale 用餐 (牛肚包)' },
+                    { date: '5/4', type: '景點', title: '梅迪奇禮拜堂', time: '13:30', note: 'Cappelle Medicee' },
+                    { date: '5/4', type: '景點', title: '梅迪奇里卡迪宮', time: '14:30', note: 'Palazzo Medici Riccardi' },
+                    { date: '5/4', type: '景點', title: '佛羅倫斯散策', time: '15:00', note: '逛街、Grom、Pegna、金豬、領主廣場' },
+                    { date: '5/4', type: '景點', title: '老橋 (維奇歐橋)', time: '17:30', note: 'Ponte Vecchio 散策' },
+                    { date: '5/4', type: '景點', title: '米開朗基羅廣場', time: '18:30', note: '看夕陽與完整佛羅倫斯夜景' },
+                    { date: '5/4', type: '其他', title: '藥妝與教堂', time: '20:30', note: 'SMN百年藥妝、聖十字教堂' },
+                    { date: '5/4', type: '住宿', title: 'Zeno Apartment', time: '21:30', note: '佛羅倫斯住宿' },
                     
                     // 5/5 Tue.
                     { date: '5/5', type: '景點', title: '烏菲茲美術館', time: '08:45', note: 'Uffizi Gallery, Giunti Odeon 戲院書店' },
