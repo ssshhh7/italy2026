@@ -70,9 +70,34 @@
 
                 <!-- List -->
                 <div class="space-y-5">
-                    <div v-for="(item, idx) in filteredItinerary" :key="idx" class="relative">
+                    <div v-for="(item, idx) in filteredItinerary" :key="idx" @click="toggleMenu(idx)" class="relative group cursor-pointer">
+                        
+                        <!-- 統一按鈕組：放在卡片的最上方 -->
+                        <div class="absolute top-2 right-2 flex space-x-2 z-[60]">
+                            <!-- 電腦版 Hover -->
+                            <div class="hidden md:flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button @click.stop="editItem(item)" class="bg-blue-500 text-white w-8 h-8 rounded-full shadow-lg flex items-center justify-center">
+                                    <i class="fas fa-edit text-xs"></i>
+                                </button>
+                                <button @click.stop="deleteItem(item)" class="bg-red-500 text-white w-8 h-8 rounded-full shadow-lg flex items-center justify-center">
+                                    <i class="fas fa-trash-alt text-xs"></i>
+                                </button>
+                            </div>
+
+                            <!-- 手機版 Click (由 activeItemId 控制) -->
+                            <div v-if="activeItemId === idx" class="flex md:hidden space-x-2 animate-in fade-in zoom-in duration-200">
+                                <button @click.stop="editItem(item)" class="bg-blue-500 text-white w-8 h-8 rounded-full shadow-lg flex items-center justify-center">
+                                    <i class="fas fa-edit text-xs"></i>
+                                </button>
+                                <button @click.stop="deleteItem(item)" class="bg-red-500 text-white w-8 h-8 rounded-full shadow-lg flex items-center justify-center">
+                                    <i class="fas fa-trash-alt text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+
                         <!-- Flight Card -->
                         <div v-if="item.type === '航班'" class="bg-gray-800 text-white p-5 rounded-3xl shadow-md">
+                            <!-- 內容維持不變 -->
                             <div class="flex justify-between text-[10px] mb-4 opacity-70">
                                 <span>{{item.note}}</span>
                                 <i class="fas fa-plane"></i>
@@ -85,7 +110,7 @@
                         </div>
 
                         <!-- Normal Card -->
-                        <div v-else @click="goMap(item.title)" class="bg-white p-4 rounded-2xl shadow-sm border-l-4 border-japan-green flex items-start space-x-3">
+                        <div v-else class="bg-white p-4 rounded-2xl shadow-sm border-l-4 border-japan-green flex items-start space-x-3">
                             <div class="bg-gray-50 p-2 rounded-xl text-japan-green">
                                 <i :class="getIcon(item.type)"></i>
                             </div>
@@ -96,14 +121,13 @@
                                 </div>
                                 <h3 class="font-bold text-gray-800 text-sm mb-1">{{item.title}}</h3>
                                 <p class="text-[11px] text-gray-500 leading-relaxed">{{item.note}}</p>
+                                <!-- 地圖按鈕放在內容區下方，並加上 .stop 防止觸發選單關閉 -->
+                                <div v-if="item.type === '景點' || item.type === '美食'" 
+                                    @click.stop="goMap(item.title)" 
+                                    class="mt-2 text-[10px] text-blue-500 inline-block">
+                                    <i class="fas fa-map-marker-alt"></i> Google Maps
+                                </div>
                             </div>
-                        </div>
-
-                        <!-- Gap Icon -->
-                        <div v-if="idx < filteredItinerary.length - 1" class="ml-6 py-2 border-l-2 border-dotted border-gray-200">
-                             <div class="pl-4 text-[10px] text-gray-400 italic">
-                                <i class="fas fa-ellipsis-v mr-2"></i> {{item.gap || 'Next Move'}}
-                             </div>
                         </div>
                     </div>
                 </div>
@@ -218,21 +242,23 @@
                     { date: '4/28', type: '其他', title: '蘇連多-龐貝 火車', time: '09:00', note: 'Sorrento - Pompei Scavi', gap: '40 mins' },
                     { date: '4/28', type: '景點', title: '龐貝古城 Pompeii', time: '10:00', note: 'Villa Dei Misteri 遺址參觀', gap: '下午前往拿坡里' },
                     { date: '4/28', type: '其他', title: '拿坡里-羅馬 ITALO', time: '17:30', note: 'Napoli 17:30 - 18:45 Roma Termini', gap: '1hr 15min' },
-                    { date: '4/28', type: '景點', title: '特雷維噴泉 Fontana di Trevi', time: '20:00', note: '許願池夜景' },
+                    { date: '4/28', type: '景點', title: '特雷維噴泉 Fontana di Trevi', time: '20:00', note: '許願池夜景，附近KFC二樓有廁所' },
                     { date: '4/28', type: '住宿', title: 'Urbanflat Repubblica Square', time: '21:30', note: '羅馬住宿 (Day 1)' },
                     
                     // 4/29 Wed.
                     { date: '4/29', type: '景點', title: '梵蒂岡深度遊', time: '09:30', note: '博物館、拉斐爾廳、西斯汀、聖彼得', gap: '重要預約' },
+                    { date: '4/29', type: '美食', title: 'Pastasciutta', time: '12:30', note: '梵蒂岡旁手工生義大利麵，推薦松露或番茄口味' },
                     { date: '4/29', type: '景點', title: '納沃納廣場 Piazza Navona', time: '15:30', note: '噴泉藝術巡禮' },
                     { date: '4/29', type: '景點', title: '萬神殿 Pantheon', time: '17:00', note: '古羅馬神殿' },
-                    { date: '4/29', type: '美食', title: 'Trattoria Vecchia Roma', time: '19:00', note: '地窖餐廳晚餐' },
+                    { date: '4/29', type: '美食', title: 'Armando al Pantheon', time: '19:30', note: '萬神殿旁傳奇老店，經典 Carbonara 與燉牛尾' },
                     { date: '4/29', type: '住宿', title: 'Urbanflat Repubblica', time: '21:00', note: '羅馬住宿' },
                     
                     // 4/30 Thu.
                     { date: '4/30', type: '景點', title: '古羅馬古蹟群', time: '09:00', note: '競技場、古羅馬廣塲、帕拉提諾之丘' },
-                    { date: '4/30', type: '景點', title: '真理之口 Bocca della Verità', time: '14:30', note: '希臘聖母堂門廊 (需排隊拍照)' },
+                    { date: '4/30', type: '景點', title: '真理之口 Bocca della Verità', time: '11:30', note: '希臘聖母堂門廊 (需排隊拍照)' },
+                    { date: '4/30', type: '美食', title: 'Pastificio Guerra', time: '12:30', note: '西班牙廣場旁排隊名店，平價美味外帶義大利麵' },
                     { date: '4/30', type: '景點', title: '西班牙廣場 Piazza di Spagna', time: '16:30', note: '破船噴泉、逛街大道購物' },
-                    { date: '4/30', type: '美食', title: 'Trattoria Vecchia Roma', time: '19:30', note: '地窖餐廳二訪' },
+                    { date: '4/30', type: '美食', title: 'Trattoria Vecchia Roma', time: '19:30', note: '地窖餐廳' },
                     { date: '4/30', type: '住宿', title: 'Urbanflat Repubblica', time: '21:30', note: '羅馬住宿' },
                     
                     // 5/1 Fri.
@@ -256,7 +282,9 @@
                     // 5/4 Mon.
                     { date: '5/4', type: '景點', title: '聖母百花大教堂群', time: '08:15', note: '穹頂、鐘樓、洗禮堂、博物館' },
                     { date: '5/4', type: '美食', title: '中央市場', time: '12:00', note: 'Mercato Centrale 用餐 (牛肚包)' },
-                    { date: '5/4', type: '景點', title: '梅迪奇禮拜堂', time: '13:30', note: 'Cappelle Medicee' },
+                    { date: '5/4', type: '美食', title: 'Vivoli Gelato', time: '13:00', note: '佛羅倫斯最古老冰淇淋店，必吃水果口味或招牌奶油' },
+                    { date: '5/4', type: '購物', title: 'Taddei Simone', time: '13:30', note: '精緻手工皮革製品，傳統無縫皮革工法 (Cuoio Artistico)' },
+                    { date: '5/4', type: '景點', title: '梅迪奇禮拜堂', time: '14:00', note: 'Cappelle Medicee' },
                     { date: '5/4', type: '景點', title: '梅迪奇里卡迪宮', time: '14:30', note: 'Palazzo Medici Riccardi' },
                     { date: '5/4', type: '景點', title: '佛羅倫斯散策', time: '15:00', note: '逛街、Grom、Pegna、金豬、領主廣場' },
                     { date: '5/4', type: '景點', title: '老橋 (維奇歐橋)', time: '17:30', note: 'Ponte Vecchio 散策' },
@@ -266,21 +294,55 @@
                     
                     // 5/5 Tue.
                     { date: '5/5', type: '景點', title: '烏菲茲美術館', time: '08:45', note: 'Uffizi Gallery, Giunti Odeon 戲院書店' },
+                    { date: '5/5', type: '美食', title: "All'Antico Vinaio", time: '12:00', note: '全球最紅三明治店，推薦 La Favolosa 或 La Paradiso' },
                     { date: '5/5', type: '景點', title: '學院美術館', time: '14:45', note: '看大衛像' },
                     { date: '5/5', type: '住宿', title: 'Zeno Apartment', time: '19:00', note: '佛羅倫斯住宿 (Day 3)' },
                     
                     // 5/6 Wed.
-                    { date: '5/6', type: '其他', title: '佛羅倫斯-威尼斯 火車', time: '09:00', note: 'Firenze - Venezia S.L.', gap: '2 hrs' },
+                    { date: '5/6', type: '其他', title: '佛羅倫斯-威尼斯 火車', time: '09:00', note: 'Firenze - Venezia S.L./威尼斯建築大學有廁所要安靜上', gap: '2 hrs' },
+                    { date: '5/6', type: '景點', title: '聖馬可廣場', time: '14:30', note: '威尼斯地標，後方有【奎利尼·斯坦帕里亞基金會】可休息/如廁' },
+                    { date: '5/6', type: '景點', title: '嘆息橋', time: '15:15', note: '連接總督宮與監獄的華麗橋樑，在麥草橋上拍攝最美' },,
+                    { date: '5/6', type: '美食', title: 'Caffè Florian', time: '15:30', note: '花神咖啡館：世界最美咖啡館之一，體驗廣場露天音樂' },
+                    { date: '5/6', type: '美食', title: 'Gelatoteca Suso', time: '17:00', note: '人氣冰淇淋，買完剛好去旁邊的橋拍照' },
+                    { date: '5/6', type: '景點', title: '里阿爾托橋', time: '17:30', note: '威尼斯最著名的橋樑，欣賞大運河日落黃金時刻' },
                     { date: '5/6', type: '住宿', title: 'Casanova ai Tolentini', time: '14:00', note: '威尼斯住宿 (1 night)' },
                     
                     // 5/7 Thu.
                     { date: '5/7', type: '其他', title: '威尼斯-米蘭 火車', time: '09:00', note: 'Venezia - Milano', gap: '2.5 hrs' },
+                    { date: '5/7', type: '景點', title: '米蘭主教座堂 (Duomo)', time: '15:30', note: '世界第三大教堂，必看哥德式尖塔與石雕 (需事先預約登頂)，附近百貨Rinascente Milano的7F有廁所' },
                     { date: '5/7', type: '景點', title: '最後的晚餐', time: '15:00', note: '達文西名畫參觀' },
+                    { date: '5/7', type: '購物', title: 'Pettinaroli', time: '14:30', note: '百年文具老店，精美手工筆記本、印章與傳統書寫工具' },
+                    { date: '5/7', type: '美食', title: 'Ciacco Gelato', time: '14:00', note: '評分極高的手工冰淇淋，專注食材天然原味' },
                     { date: '5/7', type: '住宿', title: 'Binario Verticale', time: '18:00', note: '米蘭住宿 (1 night)' },
                     
                     // 5/8 Fri.
                     { date: '5/8', type: '航班', title: '長榮航空 BR 96', from: 'MXP', to: 'TPE', time: '11:15', arrTime: '05:55(+1)', note: '米蘭馬爾彭薩 - 桃園機場' }
                 ]);
+
+                
+                const activeItemId = ref(null);
+
+                const toggleMenu = (idx) => {
+                // 加上這行 console.log，你可以按 F12 檢查點擊是否有反應
+                console.log('點擊了：', idx); 
+                activeItemId.value = activeItemId.value === idx ? null : idx;
+                };
+
+                const editItem = (item) => {
+                const newTitle = prompt("修改行程名稱：", item.title);
+                if (newTitle) {
+                    item.title = newTitle;
+                    // ... 其他修改邏輯
+                }
+                activeItemId.value = null; // 執行完動作後，把按鈕藏起來
+                };
+
+                const deleteItem = (targetItem) => {
+                if (confirm(`確定要刪除嗎？`)) {
+                    itinerary.value = itinerary.value.filter(item => item !== targetItem);
+                }
+                activeItemId.value = null; // 執行完動作後，把按鈕藏起來
+                };
 
                 const filteredItinerary = computed(() => {
                     return itinerary.value.filter(i => i.date === selectedDate.value);
@@ -325,7 +387,7 @@
                     showAddModal.value = false;
                 };
 
-                return { currentTab, tabs, dates, selectedDate, filteredItinerary, currentCity, currentWeather, getIcon, goMap, showAddModal, newItem, openModal, addItem };
+                return { currentTab, tabs, dates, selectedDate, filteredItinerary, currentCity, currentWeather, getIcon, goMap, showAddModal, newItem, openModal, addItem,activeItemId, toggleMenu, editItem, deleteItem };
                 
             }
         }).mount('#app');
