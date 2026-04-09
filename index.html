@@ -4,10 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Italy 2026 Trip</title>
+    <meta name="description" content="我不在意你，我在義大利🇮🇹">
+    <meta name="keywords" content="義大利旅遊,2026旅行,義大利行程,米蘭,羅馬,佛羅倫斯,托斯卡尼自駕,威尼斯,行程規劃,Jimmy,Sarah,Trini,Sam,Teru">
+    <meta property="og:image" content="banner.jpg">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f1ee-1f1f9.png" type="image/png">
     <style>
         :root { --j-green: #6B8E23; --j-red: #D9534F; --j-bg: #F9F9F7; }
         body { font-family: 'Noto Sans TC', sans-serif; background-color: var(--j-bg); -webkit-tap-highlight-color: transparent; }
@@ -403,7 +407,7 @@
                 newItem.value = { type: '景點', title: '', time: '', note: '' };
                 showAddModal.value = false;
                 };
-
+                
                 return { currentTab, tabs, dates, selectedDate, filteredItinerary, currentCity, currentWeather, getIcon, goMap, showAddModal, newItem, openModal, addItem,activeItemId, toggleMenu, editItem, deleteItem, editingItem };
                 
             }
