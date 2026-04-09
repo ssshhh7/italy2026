@@ -148,38 +148,47 @@
         <!-- 新增行程彈窗 -->
         <div v-if="showAddModal" @click.self="showAddModal = false" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-6">
             <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl">
-                <h2 class="text-xl font-bold mb-4 text-gray-800">新增 {{selectedDate}} 行程</h2>
+                <h2 class="text-xl font-bold mb-4 text-gray-800">
+                    {{ editingItem ? '修改行程' : '新增 ' + selectedDate + ' 行程' }}
+                </h2>
                 
                 <div class="space-y-4">
+                    <!-- 類別選擇 -->
                     <div>
                         <label class="text-xs text-gray-400 block mb-1">類別</label>
-                        <select v-model="newItem.type" class="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-gray-700 h-[52px] appearance-none cursor-pointer shadow-none outline-none" style="font-size: 16px; -webkit-appearance: none; -webkit-tap-highlight-color: transparent;">
-                            <option>景點</option>
-                            <option>美食</option>
-                            <option>住宿</option>
-                            <option>交通</option>
-                            <option>其他</option>
+                        <select v-model="newItem.type" class="w-full bg-gray-50 rounded-xl px-4 py-3 text-gray-700">
+                            <option>景點</option><option>美食</option><option>住宿</option><option>交通</option><option>其他</option>
                         </select>
                     </div>
+                    
+                    <!-- 名稱輸入 -->
                     <div>
                         <label class="text-xs text-gray-400 block mb-1">名稱</label>
-                        <input v-model="newItem.title" type="text" placeholder="例如：萬神殿" class="w-full bg-gray-50 border-none rounded-xl p-3 text-sm">
+                        <input v-model="newItem.title" type="text" class="w-full bg-gray-50 rounded-xl p-3 text-sm">
                     </div>
+                    
                     <div class="flex space-x-3">
+                        <!-- 時間輸入 -->
                         <div class="flex-1">
                             <label class="text-xs text-gray-400 block mb-1">時間</label>
-                            <input v-model="newItem.time" type="text" placeholder="14:00" class="w-full bg-gray-50 border-none rounded-xl p-3 text-sm">
+                            <input v-model="newItem.time" type="text" class="w-full bg-gray-50 rounded-xl p-3 text-sm">
                         </div>
+                        <!-- 備註輸入 -->
                         <div class="flex-1">
                             <label class="text-xs text-gray-400 block mb-1">備註</label>
-                            <input v-model="newItem.note" type="text" placeholder="記得預約" class="w-full bg-gray-50 border-none rounded-xl p-3 text-sm">
+                            <input v-model="newItem.note" type="text" class="w-full bg-gray-50 rounded-xl p-3 text-sm">
                         </div>
                     </div>
                 </div>
-
                 <div class="flex space-x-3 mt-6">
-                    <button @click="showAddModal = false" class="flex-1 py-3 rounded-xl text-gray-500 font-bold text-sm bg-gray-100">取消</button>
-                    <button @click="addItem" class="flex-1 py-3 rounded-xl text-white font-bold text-sm bg-red-500">儲存</button>
+                    <!-- 取消按鈕：關閉視窗並清空編輯狀態 -->
+                    <button @click="showAddModal = false; editingItem = null;" class="flex-1 py-3 rounded-xl text-gray-500 bg-gray-100 font-bold text-sm">
+                        取消
+                    </button>
+                    <!-- 儲存按鈕：根據 editingItem 狀態自動切換文字 -->
+                    <button @click="addItem" class="flex-1 py-3 rounded-xl text-white bg-red-500 font-bold text-sm">
+                        {{ editingItem ? '儲存修改' : '儲存新增' }}
+                    </button>
                 </div>
             </div>
         </div>
@@ -200,6 +209,7 @@
                     note: '',
                     gap: ''
                 });
+                const editingItem = ref(null);
                 const selectedDate = ref('4/25');
                 const tabs = [
                     { id: 'itinerary', icon: 'fas fa-map-marker-alt' },
@@ -329,12 +339,10 @@
                 };
 
                 const editItem = (item) => {
-                const newTitle = prompt("修改行程名稱：", item.title);
-                if (newTitle) {
-                    item.title = newTitle;
-                    // ... 其他修改邏輯
-                }
-                activeItemId.value = null; // 執行完動作後，把按鈕藏起來
+                editingItem.value = item; // 標記正在編輯這一筆
+                newItem.value = { ...item }; // 把現有資料帶入輸入框
+                showAddModal.value = true; // 打開 Modal
+                activeItemId.value = null; // 關閉手機選單
                 };
 
                 const deleteItem = (targetItem) => {
@@ -367,27 +375,36 @@
 
                 // 打開彈窗
                 const openModal = () => {
-                    showAddModal.value = true;
+                editingItem.value = null; // 1. 確保不是編輯模式
+                // 重置所有輸入欄位為空白（或預設值）
+                newItem.value = { 
+                    type: '景點', 
+                    title: '', 
+                    time: '', 
+                    note: '' 
+                }; 
+                showAddModal.value = true; // 3. 最後才打開視窗
                 };
 
                 // 儲存新行程
                 const addItem = () => {
-                    if (!newItem.value.title) {
-                        alert('請輸入行程名稱！');
-                        return;
-                    }
-                    // 將新行程加入到清單中（會自動對應目前選中的日期）
-                    itinerary.value.push({
-                        ...newItem.value,
-                        date: selectedDate.value
-                    });
-                    
-                    // 重置輸入框並關閉彈窗
-                    newItem.value = { type: '景點', title: '', time: '', note: '', gap: '' };
-                    showAddModal.value = false;
+                if (!newItem.value.title) { alert('請輸入名稱！'); return; }
+                
+                if (editingItem.value) {
+                    // 如果是在編輯模式，更新該筆原始資料
+                    Object.assign(editingItem.value, newItem.value);
+                    editingItem.value = null; // 清空編輯狀態
+                } else {
+                    // 如果是新增模式，才 push 進陣列
+                    itinerary.value.push({ ...newItem.value, date: selectedDate.value });
+                }
+                
+                // 重置輸入框並關閉 Modal
+                newItem.value = { type: '景點', title: '', time: '', note: '' };
+                showAddModal.value = false;
                 };
 
-                return { currentTab, tabs, dates, selectedDate, filteredItinerary, currentCity, currentWeather, getIcon, goMap, showAddModal, newItem, openModal, addItem,activeItemId, toggleMenu, editItem, deleteItem };
+                return { currentTab, tabs, dates, selectedDate, filteredItinerary, currentCity, currentWeather, getIcon, goMap, showAddModal, newItem, openModal, addItem,activeItemId, toggleMenu, editItem, deleteItem, editingItem };
                 
             }
         }).mount('#app');
